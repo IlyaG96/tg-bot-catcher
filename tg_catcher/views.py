@@ -1,9 +1,13 @@
-from json import loads, dumps
-import requests
 from textwrap import dedent
+from json import loads, dumps
+import logging
+
+import requests
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import settings
 from django.http import HttpResponse, HttpRequest
+
+logger = logging.getLogger(__name__)
 
 
 @csrf_exempt
@@ -16,19 +20,17 @@ def catch_incoming_message(request: HttpRequest) -> HttpResponse:
 
     if message == '/start':
         user_id = message_data['message']['from']['id']
-        keyboard = dumps(
-            {'keyboard':
+        keyboard = dumps({'keyboard':
+            [
                 [
-                    [
-                        {'text': 'Отправить контакт',
-                         'request_contact': True},
-                    ]
-                ],
-                'one_time_keyboard': True
-             }
-        )
+                    {'text': 'Отправить контакт',
+                     'request_contact': True},
+                ]
+            ],
+            'one_time_keyboard': True
+        })
 
-        text = "Привет, а дашь номер?"
+        text = 'Привет, а дашь номер?'
         data = {
             'text': text,
             'chat_id': user_id,
@@ -36,10 +38,11 @@ def catch_incoming_message(request: HttpRequest) -> HttpResponse:
         }
         response = requests.post(url, data=data)
         response.raise_for_status()
+        logger.info(f'Start dialog with user {user_id}')
 
         return HttpResponse({'Status': 200})
 
-    else:
+    else:  # if not /start in message
         contact_phone = message_data['message'].get('contact').get('phone_number')
         user_id = message_data['message']['chat']['id']
         if contact_phone:
@@ -52,7 +55,6 @@ def catch_incoming_message(request: HttpRequest) -> HttpResponse:
                       'login': username}
             )
             nova_post.raise_for_status()
-
             text = dedent(
                 f'''
                 Ура-ура! Я сохранил твой номер на сервере тайной организации :)
@@ -64,10 +66,11 @@ def catch_incoming_message(request: HttpRequest) -> HttpResponse:
             }
             response = requests.post(url, data=data)
             response.raise_for_status()
+            logger.info(f'Save number on NOVA site and send message to {user_id}')
 
             return HttpResponse({'Status': 200})
 
-        else:
+        else:  # write whatever you want, he still can't do anything else
             text = dedent(
                 f'''
                 Больше я ничего не умею, но ты можешь удалить меня, 
@@ -80,5 +83,6 @@ def catch_incoming_message(request: HttpRequest) -> HttpResponse:
             }
             response = requests.post(url, data=data)
             response.raise_for_status()
+            logger.info(f'User {user_id} writes something unacceptable')
 
             return HttpResponse({'Status': 200})
