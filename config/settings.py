@@ -9,6 +9,7 @@ SECRET_KEY = env.str('SECRET_KEY')
 DEBUG = env.bool('DEBUG', False)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', '127.0.0.1')
 TG_BOT_TOKEN = env.str('TG_BOT_TOKEN')
+NOVA_PRIVATE_URL = env.str('NOVA_PRIVATE_URL')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
