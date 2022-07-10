@@ -43,15 +43,15 @@ def catch_incoming_message(request: HttpRequest) -> HttpResponse:
         return HttpResponse({'Status': 200})
 
     else:  # if not /start in message
-        contact_phone = message_data['message'].get('contact').get('phone_number')
+        contact = message_data['message'].get('contact')
         user_id = message_data['message']['chat']['id']
-        if contact_phone:
+        if contact:
             username = message_data['message']['from']['username']
 
             nova_post = requests.post(
                 url=settings.NOVA_PRIVATE_URL,
                 headers={'Content-Type': 'application/json; charset=UTF-8'},
-                json={'phone': contact_phone,
+                json={'phone': contact.get('phone_number'),
                       'login': username}
             )
             nova_post.raise_for_status()
